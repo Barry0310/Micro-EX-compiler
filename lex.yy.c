@@ -765,7 +765,7 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 7 "final.l"
-{printf("%s\n",yytext);}
+
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
@@ -801,17 +801,17 @@ YY_RULE_SETUP
 case 8:
 YY_RULE_SETUP
 #line 14 "final.l"
-{ yylval.vint=1; return TYPE; }
+{ yylval.vint=0; return TYPE; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
 #line 15 "final.l"
-{ yylval.vint=1; return TYPE; }\
+{ yylval.vint=1; return TYPE; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
 #line 16 "final.l"
-{ printf("%s\n",yytext);yylval.str=yytext; return Vname; }
+{ yylval.str=yytext; return Vname; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP

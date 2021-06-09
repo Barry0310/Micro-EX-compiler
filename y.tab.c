@@ -69,11 +69,19 @@
 #line 1 "final.y"
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 int yylex();
 void yyerror(const char *s);
-char var[10][10]={};
+char varList[10][10]={};
+int varCount=0;
+char varType[10][10]={"Integer", "Float"};
+FILE* file=NULL;
+void ProgramStart(char name[]);
+void StoreVar(char name[]);
+void DeclareVariable(int type);
 
-#line 77 "y.tab.c"
+#line 85 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -143,13 +151,13 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 7 "final.y"
+#line 15 "final.y"
 
 	int vint;
 	float vfloat;
 	char* str;
 
-#line 153 "y.tab.c"
+#line 161 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -473,11 +481,11 @@ union yyalloc
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  12
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  5
+#define YYNNTS  6
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  7
+#define YYNRULES  8
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  18
+#define YYNSTATES  19
 
 #define YYUNDEFTOK  2
 #define YYMAXUTOK   264
@@ -525,7 +533,7 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    17,    17,    19,    20,    22,    24,    25
+       0,    25,    25,    25,    27,    28,    30,    32,    33
 };
 #endif
 
@@ -535,8 +543,8 @@ static const yytype_int8 yyrline[] =
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "PROGRAM", "Begin", "DECLARE", "AS",
-  "END", "Vname", "TYPE", "';'", "','", "$accept", "Start", "Stmt_List",
-  "Stmt", "Vlist", YY_NULLPTR
+  "END", "Vname", "TYPE", "';'", "','", "$accept", "Start", "$@1",
+  "Stmt_List", "Stmt", "Vlist", YY_NULLPTR
 };
 #endif
 
@@ -564,8 +572,8 @@ static const yytype_int16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      -1,    -2,     4,     3,    -7,     5,     0,     1,    -7,    -7,
-      -6,    -4,     6,     8,    -7,    -7,    -7,    -7
+      -1,    -2,     4,    -7,    -7,     3,     5,     0,     1,    -7,
+      -7,    -6,    -4,     6,     8,    -7,    -7,    -7,    -7
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -573,20 +581,20 @@ static const yytype_int8 yypact[] =
      means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,     0,     0,     0,     1,     0,     0,     0,     3,     6,
-       0,     0,     0,     0,     2,     4,     5,     7
+       0,     0,     0,     2,     1,     0,     0,     0,     0,     4,
+       7,     0,     0,     0,     0,     3,     5,     6,     8
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-      -7,    -7,    -7,     2,    -7
+      -7,    -7,    -7,    -7,    -3,    -7
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     2,     7,     8,    10
+      -1,     2,     5,     8,     9,    11
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -594,34 +602,34 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      12,     6,     1,    14,     4,    13,     3,     5,     9,     0,
-       6,    11,     0,    15,     0,    16,    17
+      13,     7,     1,    15,     4,    14,     3,     6,    10,    16,
+       7,    12,     0,     0,     0,    17,    18
 };
 
 static const yytype_int8 yycheck[] =
 {
-       6,     5,     3,     7,     0,    11,     8,     4,     8,    -1,
-       5,    10,    -1,    11,    -1,     9,     8
+       6,     5,     3,     7,     0,    11,     8,     4,     8,    12,
+       5,    10,    -1,    -1,    -1,     9,     8
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     3,    13,     8,     0,     4,     5,    14,    15,     8,
-      16,    10,     6,    11,     7,    15,     9,     8
+       0,     3,    13,     8,     0,    14,     4,     5,    15,    16,
+       8,    17,    10,     6,    11,     7,    16,     9,     8
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    12,    13,    14,    14,    15,    16,    16
+       0,    12,    14,    13,    15,    15,    16,    17,    17
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     6,     1,     3,     4,     1,     3
+       0,     2,     0,     7,     1,     3,     4,     1,     3
 };
 
 
@@ -1317,43 +1325,31 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 17 "final.y"
-                                             {printf("1\n");}
-#line 1323 "y.tab.c"
-    break;
-
-  case 3:
-#line 19 "final.y"
-                {printf("2\n");}
-#line 1329 "y.tab.c"
-    break;
-
-  case 4:
-#line 20 "final.y"
-                                      {printf("2\n");}
-#line 1335 "y.tab.c"
-    break;
-
-  case 5:
-#line 22 "final.y"
-                                {printf("3\n");}
-#line 1341 "y.tab.c"
+#line 25 "final.y"
+                     {ProgramStart((yyvsp[0].str));}
+#line 1331 "y.tab.c"
     break;
 
   case 6:
-#line 24 "final.y"
-             {printf("4\n");}
-#line 1347 "y.tab.c"
+#line 30 "final.y"
+                                {DeclareVariable((yyvsp[0].vint));}
+#line 1337 "y.tab.c"
     break;
 
   case 7:
-#line 25 "final.y"
-                           {printf("4\n");}
-#line 1353 "y.tab.c"
+#line 32 "final.y"
+             {StoreVar((yyvsp[0].str));}
+#line 1343 "y.tab.c"
+    break;
+
+  case 8:
+#line 33 "final.y"
+                           {StoreVar((yyvsp[0].str));}
+#line 1349 "y.tab.c"
     break;
 
 
-#line 1357 "y.tab.c"
+#line 1353 "y.tab.c"
 
       default: break;
     }
@@ -1585,10 +1581,40 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 26 "final.y"
+#line 34 "final.y"
 
 
 int main() {
+	file=fopen("output.txt", "w");
+	if(file==NULL) {
+		printf("file error");
+		return -1;
+	}
 	yyparse();
+	fclose(file);
 	return 0;
+}
+
+void ProgramStart(char programName[]) {
+	fprintf(file, "START %s\n", programName);
+}
+
+void StoreVar(char name[]) {
+	strcpy(varList[varCount], name);
+	varCount++;
+}
+
+void DeclareVariable(int type) {
+	for(int i=0;i<varCount;++i) {
+		char* left=strstr(varList[i], "[");
+		if(left!=NULL) {
+			char* right=strstr(varList[i], "]");
+			*left='\0';
+			*right='\0';
+			fprintf(file, "Declare %s,%s_array,%s\n", varList[i], varType[type], left+1);
+			continue;
+		}
+		fprintf(file, "Declare %s,%s\n", varList[i], varType[type]);
+	}
+	varCount=0;
 }

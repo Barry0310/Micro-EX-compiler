@@ -71,7 +71,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 7 "final.y"
+#line 15 "final.y"
 
 	int vint;
 	float vfloat;
