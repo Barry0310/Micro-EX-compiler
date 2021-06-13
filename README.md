@@ -6,6 +6,6 @@ use make to compile
 make clean to remove redundant file
 
 ```
-./compile < test.txt
+./compile < FILE_NAME
 ```
 generate output.txt

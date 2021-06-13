@@ -1,0 +1,11 @@
+%%the beginning of an test data for Micro/Ex
+
+Program testP
+
+Begin
+
+ declare I, J[100], k[20] as integer;
+
+ declare A,B,C,D, LLL[100] as float;
+
+End

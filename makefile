@@ -12,4 +12,4 @@ y.tab.c y.tab.h: final.y
 
 .PHONY: clean
 clean:
-	rm -rf lex.yy.c y.tab.c y.tab.h $(exe)
+	rm -rf lex.yy.c y.tab.c y.tab.h
