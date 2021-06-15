@@ -28,14 +28,16 @@
 [Tt][Hh][Ee][Nn]	{ return THEN; }
 [Ee][Nn][Dd][Ii][Ff]	{ return IFEND; }
 [Ee][Ll][Ss][Ee]	{ return ELSE; }
-[0-9]+	{ yylval.vint = atoi(yytext); return INT; }
-[a-zA-Z][a-zA-Z0-9\_]*(\[[1-9][0-9]*\])*	{ 
+[Pp][Rr][Ii][Nn][Tt] { return PRINT; }
+[0-9]+	{ yylval.str = yytext; return INT; }
+([0-9]*\.[0-9]+)|([0-9]+\.[0-9]*)	{ yylval.str = yytext; return FLOAT; }
+[a-zA-Z][a-zA-Z0-9\_]*(\[[1-9][0-9]*\])*	{
 		struct symtab *sp=symlook(yytext);
-		yylval.symp=sp; 
+		yylval.symp=sp;
 		return NAME; }
-[a-zA-Z][a-zA-Z0-9\_]*(\[[a-zA-Z][a-zA-Z0-9\_]*\])*	{ 
+[a-zA-Z][a-zA-Z0-9\_]*(\[[a-zA-Z][a-zA-Z0-9\_]*\])*	{
 		struct symtab *sp=symlook(yytext);
-		yylval.symp=sp; 
+		yylval.symp=sp;
 		return NAME; }
 .	{ return yytext[0]; }
 %%

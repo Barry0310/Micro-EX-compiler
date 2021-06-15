@@ -4,17 +4,19 @@ Program testP
 
 Begin
 
- declare I as integer;
+ declare I,J as integer;
  declare A,B,C,D, LLL[100] as float;
 
  FOR (I:=1 TO 100)
-  A:=LLL[I]-B*D-C;
+  FOR (J:=1 TO 100)
+   A:=-LLL[I]+B*D-C;
+  ENDFOR
  ENDFOR
- 
+
  IF (A>=10000) THEN
-  Z:=LLL[I]-B*D-C;
+  print(A+3.14);
  ELSE
-  F:=LLL[I]-B*D-C;
+  print(2,1.4);
  ENDIF
- 
+
 End
