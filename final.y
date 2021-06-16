@@ -13,23 +13,33 @@ int varCount=0;
 int tempCount=1;
 int paramCount=0;
 int labelCount=0;
+int labelNum=0;
 char varType[10][11]={"Integer", "Float"};
 char opType[4][5]={"ADD", "SUB", "MUL", "DIV"};
 FILE* file=NULL;
 
-void ProgramStart(char name[]);
+void ProgramStart(char programName[]);
 void VarToTable(struct symtab *var);
 void DeclareVariable(int type);
 void StoreVar(struct symtab *var, struct symtab *expr);
 struct symtab *CreateTemp();
 struct symtab *Operation(struct symtab *left, int op, struct symtab *right);
+struct symtab *Variable(struct symtab *var);
 struct symtab *Integer(char num[]);
 struct symtab *Float(char num[]);
 struct symtab *Uminus(struct symtab *num);
 void CreateLabel();
-void ForJump(struct symtab *var, char *dt, struct symtab *expr);
+void PrintLabel(int num);
+void LabelEnd();
+void ForJump(struct symtab *var, char *dt, struct symtab *expr, struct symtab *step);
+void WhileJump(char jump[]);
+void WhileEndJump();
 void ParamToTable(char parm[]);
+void Condition(struct symtab *left, char comp[], struct symtab *right);
+void IfJump(char jump[]);
+void ElseJump();
 void CallPrint();
+void ProgramEnd(char programName[]);
 void DeclTemp();
 %}
 %union {
@@ -38,21 +48,21 @@ void DeclTemp();
 	struct symtab *symp;
 }
 %token PROGRAM Begin DECLARE AS END ASSIGN PRINT
-%token FOREND FOR TO DOWNTO
+%token FOREND FOR TO DOWNTO WHILE WHILEEND STEP
 %token IF THEN ELSE IFEND
 %token GT LW GE LE EQ NE
 %token <vint> TYPE
 %token <str>  FLOAT INT
 %token <symp> NAME
-%type <symp> Expr AssignExpr
-%type <str> Dt Param Comp
+%type <symp> Expr AssignExpr ForStep
+%type <str> Dt Param Comp Cond
 
 %left '+' '-'
 %left '*' '/'
 %nonassoc UMINUS
 
 %%
-Start: PROGRAM NAME{ ProgramStart($2->name); } Begin StmtList END{ DeclTemp(); } ;
+Start: PROGRAM NAME{ ProgramStart($2->name); } Begin StmtList END{ ProgramEnd($2->name); DeclTemp(); } ;
 
 StmtList: StmtList Stmt
         | ;
@@ -60,6 +70,7 @@ StmtList: StmtList Stmt
 Stmt: AssignStmt
     | DeclStmt
 		| ForStmt
+		| WhileStmt;
 		| IfStmt
 		| PrintStmt;
 
@@ -72,7 +83,7 @@ Expr: Expr '+' Expr{ $$=Operation($1, 0, $3); }
 		| Expr '*' Expr{ $$=Operation($1, 2, $3); }
 		| Expr '/' Expr{ $$=Operation($1, 3, $3); }
 		| '-' Expr %prec UMINUS{ $$=Uminus($2); }
-		| NAME{ $$=$1; }
+		| NAME{ $$=Variable($1); }
 		| INT{ $$=Integer($1); }
 		| FLOAT{ $$=Float($1); };
 
@@ -81,24 +92,29 @@ DeclStmt: DECLARE Vlist	AS TYPE ';'{ DeclareVariable($4); };
 Vlist: NAME{ VarToTable($1); }
      | Vlist ',' NAME{ VarToTable($3); };
 
-ForStmt: FOR '(' AssignExpr Dt Expr ')'{ CreateLabel(); } StmtList FOREND{ ForJump($3, $4, $5); };
+ForStmt: FOR '(' AssignExpr Dt Expr ForStep ')'{ CreateLabel(); PrintLabel(labelCount); } StmtList FOREND{ ForJump($3, $4, $5, $6); LabelEnd(); };
+
+ForStep: STEP Expr{ $$=$2; }
+       |{ $$=NULL; };
 
 Dt: TO{ $$="To"; }
-  | DOWNTO { $$="DownTo"; } ;
+  | DOWNTO{ $$="DownTo"; };
 
-IfStmt:{ printf("if "); } IF '(' Cond ')' THEN StmtList ElseSec IFEND{ printf("end\n"); };
+WhileStmt: WHILE '('{ CreateLabel(); PrintLabel(labelCount); } Cond{ CreateLabel(); WhileJump($4); } ')' StmtList WHILEEND{ WhileEndJump(); PrintLabel(labelCount); LabelEnd(); LabelEnd(); };
 
-ElseSec:{ printf("else "); } ELSE StmtList{ printf("\n"); }
+IfStmt: IF '(' Cond ')'{ CreateLabel(); IfJump($3); } THEN StmtList ElseSec IFEND{ LabelEnd(); };
+
+ElseSec: ELSE{ CreateLabel(); ElseJump(); PrintLabel(labelCount-1); } StmtList{ PrintLabel(labelCount); LabelEnd(); }
        | ;
 
-Cond: Expr Comp Expr{};
+Cond: Expr Comp Expr{ $$=$2; Condition($1, $2, $3); };
 
-Comp: GT{ $$="JG"; }
-    | LW{ $$="JL"; }
-		| GE{ $$="JGE"; }
-		| LE{ $$="JLE"; }
-		| EQ{ $$="JE"; }
-		| NE{ $$="JNE"; } ;
+Comp: GT{ $$="JLE"; }
+    | LW{ $$="JGE"; }
+		| GE{ $$="JL"; }
+		| LE{ $$="JG"; }
+		| EQ{ $$="JNE"; }
+		| NE{ $$="JE"; } ;
 
 PrintStmt: PRINT '(' ParamList ')' ';'{ CallPrint(); } ;
 
@@ -133,23 +149,22 @@ void VarToTable(struct symtab *var) {
 void DeclareVariable(int type) {
 	for(int i=0;i<varCount;++i) {
 		varList[i]->type=type;
-		struct symtab temp=*varList[i];
-		char* left=strstr(temp.name, "[");
+		char* left=strstr(varList[i]->name, "[");
 		if(left!=NULL) {
-			char* right=strstr(temp.name, "]");
+			char* right=strstr(varList[i]->name, "]");
 			*left='\0';
 			*right='\0';
-			fprintf(file, "\tDeclare %s,%s_array,%s\n", temp.name, varType[temp.type], left+1);
+			fprintf(file, "\tDeclare %s,%s_array,%s\n", varList[i]->name, varType[varList[i]->type], left+1);
 			continue;
 		}
-		fprintf(file, "\tDeclare %s,%s\n", temp.name, varType[temp.type]);
+		fprintf(file, "\tDeclare %s,%s\n", varList[i]->name, varType[varList[i]->type]);
 	}
 	varCount=0;
 }
 
 void StoreVar(struct symtab *var, struct symtab *expr) {
-	if(var->type) fprintf(file, "\tF_Store %s,%s\n", expr->name, var->name);
-	else fprintf(file, "\tI_Store %s,%s\n", expr->name, var->name);
+	if(var->type) fprintf(file, "\tF_STORE %s,%s\n", expr->name, var->name);
+	else fprintf(file, "\tI_STORE %s,%s\n", expr->name, var->name);
 }
 
 struct symtab *CreateTemp() {
@@ -173,6 +188,15 @@ struct symtab *Uminus(struct symtab *num) {
 	return temp;
 }
 
+struct symtab *Variable(struct symtab *var) {
+	char temp[11]={};
+	strcpy(temp, var->name);
+	char* left=strstr(temp, "[");
+	if(left!=NULL) *left='\0';
+	var->type=symlook(temp)->type;
+	return var;
+}
+
 struct symtab *Integer(char num[]) {
 	struct symtab *sp=symlook(num);
 	sp->type=0;
@@ -187,14 +211,34 @@ struct symtab *Float(char num[]) {
 
 void CreateLabel() {
 	char num[10]={};
-	sprintf(labelList[labelCount], "lb&%d", labelCount+1);
-	fprintf(file, "%s", labelList[labelCount++]);
+	sprintf(labelList[labelCount++], "lb&%d", ++labelNum);
 }
 
-void ForJump(struct symtab *var, char *dt, struct symtab *expr) {
-	fprintf(file, "\t%s %s\n", dt=="To"?"INC":"DEC", var->name);
+void PrintLabel(int num) {
+	fprintf(file, "%s:", labelList[num-1]);
+}
+
+void LabelEnd() {
+	--labelCount;
+}
+
+void ForJump(struct symtab *var, char *dt, struct symtab *expr, struct symtab *step) {
+	if(step==NULL) fprintf(file, "\t%s %s\n", dt=="To"?"INC":"DEC", var->name);
+	else {
+		struct symtab *temp=CreateTemp();
+		fprintf(file, "\tI_%s %s,%s,%s\n", dt=="To"?"ADD":"SUB", var->name, step->name, temp->name);
+		fprintf(file, "\tI_STORE %s,%s\n", temp->name, var->name);
+	}
 	fprintf(file, "\tI_CMP %s,%s\n", var->name, expr->name);
-	fprintf(file, "\tJL %s\n", labelList[--labelCount]);
+	fprintf(file, "\tJL %s\n", labelList[labelCount-1]);
+}
+
+void WhileJump(char jump[]) {
+	fprintf(file, "\t%s %s\n", jump, labelList[labelCount-1]);
+}
+
+void WhileEndJump() {
+	fprintf(file, "\tJ %s\n", labelList[labelCount-2]);
 }
 
 void DeclTemp() {
@@ -212,8 +256,24 @@ void ParamToTable(char parm[]) {
 	paramCount++;
 }
 
+void Condition(struct symtab *left, char comp[], struct symtab *right) {
+	fprintf(file, "\t%c_CMP %s,%s\n", varType[left->type&right->type][0], left->name, right->name);
+}
+
+void IfJump(char jump[]) {
+	fprintf(file, "\t%s %s\n", jump, labelList[labelCount-1]);
+}
+
+void ElseJump() {
+	fprintf(file, "\tJ %s\n", labelList[labelCount-1]);
+}
+
+void ProgramEnd(char programName[]) {
+	fprintf(file, "\tHALT %s\n", programName);
+}
+
 void CallPrint() {
-	fprintf(file, "\tCall print");
+	fprintf(file, "\tCALL print");
 	for(int i=0;i<paramCount;++i) {
 		fprintf(file, ",%s", paramList[i]);
 	}

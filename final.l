@@ -24,11 +24,14 @@
 [Ff][Oo][Rr]	{ return FOR; }
 [Tt][Oo]	{ return TO; }
 [Dd][Oo][Ww][Nn][Tt][Oo]	{ return DOWNTO; }
+[Ss][Tt][Ee][Pp] { return STEP; }
 [Ii][Ff]	{ return IF; }
 [Tt][Hh][Ee][Nn]	{ return THEN; }
 [Ee][Nn][Dd][Ii][Ff]	{ return IFEND; }
 [Ee][Ll][Ss][Ee]	{ return ELSE; }
 [Pp][Rr][Ii][Nn][Tt] { return PRINT; }
+[Ww][Hh][Ii][Ll][Ee] { return WHILE; }
+[Ee][Nn][Dd][Ww][Hh][Ii][Ll][Ee] { return WHILEEND; }
 [0-9]+	{ yylval.str = yytext; return INT; }
 ([0-9]*\.[0-9]+)|([0-9]+\.[0-9]*)	{ yylval.str = yytext; return FLOAT; }
 [a-zA-Z][a-zA-Z0-9\_]*(\[[1-9][0-9]*\])*	{

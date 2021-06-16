@@ -7,16 +7,8 @@ Begin
  declare I,J as integer;
  declare A,B,C,D, LLL[100] as float;
 
- FOR (I:=1 TO 100)
-  FOR (J:=1 TO 100)
-   A:=-LLL[I]+B*D-C;
-  ENDFOR
+ FOR (I:=2*J-4 DOWNTO 100*J+6 STEP 5)
+  A:=-LLL[I]+B*D-C;
  ENDFOR
-
- IF (A>=10000) THEN
-  print(A+3.14);
- ELSE
-  print(2,1.4);
- ENDIF
 
 End
